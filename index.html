@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script> <!-- Script de reCAPTCHA -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         #map {
             height: 100vh;
@@ -24,7 +24,7 @@
             margin-top: 10px;
         }
         .popup-content {
-            width: 220px; /* Ajustar el ancho del cuadro */
+            width: 220px;
             text-align: center;
         }
         .popup-content input[type="text"] {
@@ -32,7 +32,7 @@
             margin-bottom: 10px;
         }
         .popup-content .g-recaptcha {
-            transform: scale(0.55); /* Ajustar el tamaño del reCAPTCHA */
+            transform: scale(0.55);
             transform-origin: 0 0;
         }
     </style>
@@ -42,15 +42,14 @@
     
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-        // Centrando el mapa en México
-        var map = L.map('map').setView([23.6345, -102.5528], 5); // Coordenadas centrales de México y zoom a nivel país
+        var map = L.map('map').setView([24.1426, -110.3128], 13);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
         var locations = [];
-        var recaptchaWidgets = []; // Array para almacenar los widgets de reCAPTCHA
+        var recaptchaWidgets = [];
 
         fetch('https://mapesquites-51a9dff5f52f.herokuapp.com/locations')
             .then(response => response.json())
@@ -62,38 +61,24 @@
             });
 
         function addMarker(location, index) {
-            L.marker([location.lat, location.lng], { icon: customIcon }).addTo(map)
+            L.marker([location.lat, location.lng]).addTo(map)
                 .bindPopup(
                     `<div class="popup-content">
                         <input type="text" id="name-${index}" value="${location.name}" placeholder="Nombre"><br>
                         <div class="star-rating" id="rating-${index}">
                             ${getStarRatingHTML(location.rating)}
                         </div>
-                        <div id="recaptcha-${index}" class="g-recaptcha"></div> <!-- reCAPTCHA div with unique id -->
+                        <div id="recaptcha-${index}" class="g-recaptcha"></div>
                         <button onclick="saveMarker(${index})">Guardar</button>
                     </div>`
                 )
                 .openPopup();
 
-            // Renderizar el widget de reCAPTCHA manualmente
             grecaptcha.ready(function() {
                 var widgetId = grecaptcha.render(`recaptcha-${index}`, {
                     'sitekey': '6LfcZCsqAAAAAMRQY9Ej8gKc3m3AjMcw_tCuidYE'
                 });
-                recaptchaWidgets[index] = widgetId; // Guardar el widgetId en el array
-            });
-
-            document.querySelectorAll(`#rating-${index} .fa-star`).forEach(star => {
-                star.addEventListener('click', function() {
-                    var rating = this.getAttribute('data-value');
-                    document.querySelectorAll(`#rating-${index} .fa-star`).forEach(s => {
-                        s.style.color = '#ddd';
-                    });
-                    for (var i = 1; i <= rating; i++) {
-                        document.querySelector(`#rating-${index} .fa-star[data-value="${i}"]`).style.color = '#ffd700';
-                    }
-                    document.querySelector(`#rating-${index}`).setAttribute('data-rating', rating);
-                });
+                recaptchaWidgets[index] = widgetId;
             });
         }
 
@@ -105,104 +90,29 @@
             return stars;
         }
 
-        map.on('dblclick', function(e) {
-            var lat = e.latlng.lat;
-            var lng = e.latlng.lng;
+        const geojsonUrls = [
+            "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Areas_Riva.geojson",
+            "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Conexiones_barrio.geojson",
+            "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Puntos_IAV.geojson",
+            "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Puntos_Infra_barrio.geojson"
+        ];
 
-            var location = { lat: lat, lng: lng, name: '', rating: 0 };
-
-            addMarker(location, locations.length);
-
-            locations.push(location);
+        geojsonUrls.forEach(url => {
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    L.geoJSON(data, {
+                        onEachFeature: function (feature, layer) {
+                            let popupContent = "<b>Información:</b><br>";
+                            for (let key in feature.properties) {
+                                popupContent += `<b>${key}:</b> ${feature.properties[key]}<br>`;
+                            }
+                            layer.bindPopup(popupContent);
+                        }
+                    }).addTo(map);
+                })
+                .catch(error => console.error('Error cargando GeoJSON:', error));
         });
-
-        function saveMarker(index) {
-            var location = locations[index];
-            var name = document.getElementById(`name-${index}`).value;
-            var rating = document.querySelector(`#rating-${index}`).getAttribute('data-rating') || 0;
-
-            // Obtener la respuesta de reCAPTCHA utilizando el widget específico
-            var recaptchaResponse = grecaptcha.getResponse(recaptchaWidgets[index]);
-
-            if (!recaptchaResponse) {
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Por favor, completa el reCAPTCHA.',
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                });
-                return;
-            }
-
-            location.name = name;
-            location.rating = rating;
-
-            fetch('https://mapesquites-51a9dff5f52f.herokuapp.com/locations', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ ...location, recaptcha: recaptchaResponse })
-            }).then(response => {
-                if (!response.ok) {
-                    throw response;
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Ubicación guardada:', data);
-                Swal.fire({
-                    title: 'Éxito',
-                    text: 'Registro guardado exitosamente!',
-                    icon: 'success',
-                    confirmButtonText: 'OK'
-                });
-                grecaptcha.reset(recaptchaWidgets[index]); // Resetea el reCAPTCHA después de un envío exitoso
-            })
-            .catch(error => {
-                error.json().then(errorMessage => {
-                    Swal.fire({
-                        title: 'Error',
-                        text: errorMessage.message || 'Hubo un error al guardar el registro.',
-                        icon: 'error',
-                        confirmButtonText: 'OK'
-                    });
-                });
-            });
-        }
-
-        var customIcon = L.icon({
-            iconUrl: 'https://raw.githubusercontent.com/datavizero/mapesquites/main/corn-icon.svg',
-            iconSize: [32, 32],
-            iconAnchor: [16, 32],
-            popupAnchor: [0, -32]
-        });
-
-        function onEachFeature(feature, layer) {
-            if (feature.properties && feature.properties.name) {
-                layer.bindPopup('Nombre: ' + feature.properties.name);
-            }
-        }
-
-        fetch('https://raw.githubusercontent.com/datavizero/mapesquites/main/Compilado_3.geojson')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('GeoJSON data loaded:', data);
-                L.geoJSON(data, {
-                    pointToLayer: function(feature, latlng) {
-                        return L.marker(latlng, { icon: customIcon });
-                    },
-                    onEachFeature: onEachFeature
-                }).addTo(map);
-            })
-            .catch(error => {
-                console.error('Error cargando el archivo GeoJSON:', error);
-            });
     </script>
 </body>
 </html>
