@@ -10,152 +10,123 @@
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         #map { height: 100vh; width: 100%; }
-        .popup-content { width: 220px; text-align: center; }
-        .popup-content input { width: 100%; margin-bottom: 10px; }
-        .popup-content .g-recaptcha { transform: scale(0.55); transform-origin: 0 0; }
+        .floating-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 1000;
+            background: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            cursor: pointer;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
     <div id="map"></div>
+    <button id="add-tree-btn" class="floating-btn" title="Añadir Árbol">🌳</button>
+
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-        var map = L.map('map').setView([24.1426, -110.3128], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
+        document.addEventListener("DOMContentLoaded", function () {
+            var map = L.map("map").setView([24.1426, -110.3128], 13);
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                attribution: "&copy; OpenStreetMap contributors",
+            }).addTo(map);
 
-        var locations = [];
-        var recaptchaWidgets = {};
-
-        fetch('https://mapariva-4fd04a7c2772.herokuapp.com/locations')
-            .then(response => response.json())
-            .then(data => {
-                locations = data;
-                data.forEach((location, index) => {
-                    addMarker(location, index);
-                });
+            var layersGroup = L.layerGroup().addTo(map);
+            var placingTree = false;
+            var treeIcon = L.icon({
+                iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/tree-svgrepo-com.svg",
+                iconSize: [40, 40],
+                iconAnchor: [20, 40],
             });
 
-        function addMarker(location, index) {
-            let marker = L.marker([location.lat, location.lng]).addTo(map);
-            Swal.fire({
-                title: "Agregar Ubicación",
-                html: `
-                    <input type="text" id="name-${index}" value="${location.name || ''}" placeholder="Nombre"><br>
-                    <div id="recaptcha-${index}" class="g-recaptcha"></div>
-                `,
-                showCancelButton: true,
-                confirmButtonText: "Guardar",
-                didOpen: () => {
-                    if (typeof grecaptcha !== "undefined") {
-                        recaptchaWidgets[index] = grecaptcha.render(`recaptcha-${index}`, {
-                            'sitekey': '6Lez3dYqAAAAAJM1PWHgq51ufHmXm7fLh-v7ZeEG'
-                        });
-                    } else {
-                        console.error("⚠️ Error: reCAPTCHA no está disponible.");
-                    }
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    saveMarker(index, location);
+            document.getElementById("add-tree-btn").addEventListener("click", function () {
+                placingTree = true;
+                map.getContainer().style.cursor = "crosshair";
+            });
+
+            map.on("click", function (e) {
+                if (placingTree) {
+                    let marker = L.marker(e.latlng, { icon: treeIcon }).addTo(layersGroup);
+                    Swal.fire({
+                        title: "Registrar Árbol",
+                        html: `<input type="text" id="tree-name" placeholder="Nombre del árbol"><br>
+                               <div id="recaptcha" class="g-recaptcha" data-sitekey="6Lez3dYqAAAAAJM1PWHgq51ufHmXm7fLh-v7ZeEG"></div>`,
+                        showCancelButton: true,
+                        confirmButtonText: "Guardar",
+                        didOpen: () => {
+                            grecaptcha.render("recaptcha");
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed && document.getElementById("tree-name").value) {
+                            fetch("https://mapariva-4fd04a7c2772.herokuapp.com/locations", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ lat: e.latlng.lat, lng: e.latlng.lng, name: document.getElementById("tree-name").value, recaptcha: grecaptcha.getResponse() }),
+                            })
+                                .then((response) => response.json())
+                                .then((data) => {
+                                    Swal.fire("Éxito", "Registro guardado!", "success");
+                                    marker.bindPopup(`<b>Nombre:</b> ${document.getElementById("tree-name").value}`).openPopup();
+                                })
+                                .catch(() => Swal.fire("Error", "No se pudo guardar", "error"));
+                        } else {
+                            layersGroup.removeLayer(marker);
+                        }
+                    });
+                    placingTree = false;
+                    map.getContainer().style.cursor = "";
                 }
             });
-        }
 
-        var customIcon = L.icon({
-        iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/tree-svgrepo-com.svg",
-        iconSize: [40, 40], // Tamaño del icono
-        iconAnchor: [16, 32], // Punto de anclaje (centro-abajo)
-        popupAnchor: [0, -32] // Punto de aparición del popup
-    });
+            const geojsonUrls = [
+                { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Areas_Riva.geojson", type: "area" },
+                { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Conexiones_barrio.geojson", type: "line" },
+                { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Puntos_IAV.geojson", type: "point-iav" },
+                { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Puntos_Infra_barrio.geojson", type: "point-infra" },
+            ];
 
-    map.on('dblclick', function(e) {
-    var lat = e.latlng.lat;
-    var lng = e.latlng.lng;
-    var location = { lat, lng, name: '' };
-
-    // Crear el marcador con el icono personalizado
-    let marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
-
-    addMarker(location, locations.length);
-    locations.push(location);
-});
-
-        function saveMarker(index, location) {
-            var name = document.getElementById(`name-${index}`).value;
-            var recaptchaResponse = grecaptcha.getResponse(recaptchaWidgets[index]);
-
-            if (!recaptchaResponse) {
-                Swal.fire({ title: 'Error', text: 'Completa el reCAPTCHA.', icon: 'error', confirmButtonText: 'OK' });
-                return;
-            }
-
-            location.name = name;
-
-            fetch('https://mapariva-4fd04a7c2772.herokuapp.com/locations', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...location, recaptcha: recaptchaResponse })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => { throw new Error(err.message || `Error ${response.status}`); });
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('✅ Registro guardado:', data);
-                Swal.fire({ title: 'Éxito', text: 'Registro guardado!', icon: 'success', confirmButtonText: 'OK' });
-                grecaptcha.reset(recaptchaWidgets[index]);
-            })
-            .catch(error => {
-                console.error('❌ Error en la solicitud:', error);
-                Swal.fire({ title: 'Error', text: `No se pudo guardar: ${error.message}`, icon: 'error', confirmButtonText: 'OK' });
+            geojsonUrls.forEach((layer) => {
+                fetch(layer.url)
+                    .then((response) => response.json())
+                    .then((data) => {
+                        let geoJsonLayer = L.geoJSON(data, {
+                            style: function (feature) {
+                                if (layer.type === "area") {
+                                    return { color: "#800080", fillColor: "#800080", fillOpacity: 0.3, interactive: false };
+                                }
+                                if (layer.type === "line") {
+                                    return { color: "#800080", weight: 2, interactive: false };
+                                }
+                            },
+                            pointToLayer: function (feature, latlng) {
+                                let color = layer.type === "point-iav" ? "#800080" : "#808080";
+                                return L.circleMarker(latlng, {
+                                    radius: 6,
+                                    fillColor: color,
+                                    color: "#000",
+                                    weight: 1,
+                                    opacity: 1,
+                                    fillOpacity: 0.8,
+                                });
+                            },
+                            onEachFeature: function (feature, layer) {
+                                let popupContent = "<b>Información:</b><br>";
+                                for (let key in feature.properties) {
+                                    popupContent += `<b>${key}:</b> ${feature.properties[key]}<br>`;
+                                }
+                                layer.bindPopup(popupContent);
+                            },
+                        }).addTo(layersGroup);
+                    })
+                    .catch((error) => console.error("Error cargando GeoJSON:", error));
             });
-        }
-
-        const geojsonUrls = [
-        { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Areas_Riva.geojson", type: "area" },
-        { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Conexiones_barrio.geojson", type: "line" },
-        { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Puntos_IAV.geojson", type: "point-iav" },
-        { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Puntos_Infra_barrio.geojson", type: "point-infra" }
-    ];
-
-    geojsonUrls.forEach(layer => {
-        fetch(layer.url)
-            .then(response => response.json())
-            .then(data => {
-                L.geoJSON(data, {
-                    style: function(feature) {
-                        if (layer.type === "area") {
-                            return { color: "#800080", fillColor: "#800080", fillOpacity: 0.3 }; // Morado con transparencia
-                        }
-                        if (layer.type === "line") {
-                            return { color: "#800080", weight: 2 }; // Morado para líneas
-                        }
-                    },
-                    pointToLayer: function(feature, latlng) {
-                        let color = layer.type === "point-iav" ? "#800080" : "#808080"; // Morado para IAV, Gris para Infra
-                        return L.circleMarker(latlng, {
-                            radius: 6,
-                            fillColor: color,
-                            color: "#000",
-                            weight: 1,
-                            opacity: 1,
-                            fillOpacity: 0.8
-                        });
-                    },
-                    onEachFeature: function(feature, layer) {
-                        let popupContent = "<b>Información:</b><br>";
-                        for (let key in feature.properties) {
-                            popupContent += `<b>${key}:</b> ${feature.properties[key]}<br>`;
-                        }
-                        layer.bindPopup(popupContent);
-                    }
-                }).addTo(map);
-            })
-            .catch(error => console.error('Error cargando GeoJSON:', error));
-    });
+        });
     </script>
 </body>
 </html>
