@@ -51,7 +51,7 @@
         var locations = [];
         var recaptchaWidgets = [];
 
-        fetch('https://mapesquites-51a9dff5f52f.herokuapp.com/locations')
+        fetch('https://mapariva-4fd04a7c2772.herokuapp.com/locations')
             .then(response => response.json())
             .then(data => {
                 locations = data;
@@ -76,7 +76,7 @@
 
             grecaptcha.ready(function() {
                 var widgetId = grecaptcha.render(`recaptcha-${index}`, {
-                    'sitekey': '6LfcZCsqAAAAAMRQY9Ej8gKc3m3AjMcw_tCuidYE'
+                    'sitekey': '6Lez3dYqAAAAAJM1PWHgq51ufHmXm7fLh-v7ZeEG'
                 });
                 recaptchaWidgets[index] = widgetId;
             });
