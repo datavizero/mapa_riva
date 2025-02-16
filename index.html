@@ -77,18 +77,26 @@
             location.name = name;
 
             fetch('https://mapariva-4fd04a7c2772.herokuapp.com/locations', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...location, recaptcha: recaptchaResponse })
-            })
-            .then(response => response.json())
-            .then(data => {
-                Swal.fire({ title: 'Éxito', text: 'Registro guardado!', icon: 'success', confirmButtonText: 'OK' });
-                grecaptcha.reset();
-            })
-            .catch(() => {
-                Swal.fire({ title: 'Error', text: 'No se pudo guardar.', icon: 'error', confirmButtonText: 'OK' });
-            });
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...location, recaptcha: recaptchaResponse })
+})
+.then(response => {
+    if (!response.ok) {
+        return response.json().then(err => { throw new Error(err.message || `Error ${response.status}`); });
+    }
+    return response.json();
+})
+.then(data => {
+    console.log('✅ Registro guardado:', data); // 🔍 Verifica en la consola
+    Swal.fire({ title: 'Éxito', text: 'Registro guardado!', icon: 'success', confirmButtonText: 'OK' });
+    grecaptcha.reset();
+})
+.catch(error => {
+    console.error('❌ Error en la solicitud:', error);
+    Swal.fire({ title: 'Error', text: `No se pudo guardar: ${error.message}`, icon: 'error', confirmButtonText: 'OK' });
+});
+
         }
 
         const geojsonUrls = [
