@@ -25,7 +25,7 @@
         }).addTo(map);
 
         var locations = [];
-        var recaptchaWidgets = [];
+        var recaptchaWidgets = {};
 
         fetch('https://mapariva-4fd04a7c2772.herokuapp.com/locations')
             .then(response => response.json())
@@ -38,17 +38,22 @@
 
         function addMarker(location, index) {
             let marker = L.marker([location.lat, location.lng]).addTo(map);
-            
             Swal.fire({
                 title: "Agregar Ubicación",
                 html: `
                     <input type="text" id="name-${index}" value="${location.name || ''}" placeholder="Nombre"><br>
-                    <div id="recaptcha-${index}" class="g-recaptcha" data-sitekey="6Lez3dYqAAAAAJM1PWHgq51ufHmXm7fLh-v7ZeEG"></div>
+                    <div id="recaptcha-${index}" class="g-recaptcha"></div>
                 `,
                 showCancelButton: true,
                 confirmButtonText: "Guardar",
                 didOpen: () => {
-                    grecaptcha.render(`recaptcha-${index}`, { 'sitekey': '6Lez3dYqAAAAAJM1PWHgq51ufHmXm7fLh-v7ZeEG' });
+                    if (typeof grecaptcha !== "undefined") {
+                        recaptchaWidgets[index] = grecaptcha.render(`recaptcha-${index}`, {
+                            'sitekey': '6Lez3dYqAAAAAJM1PWHgq51ufHmXm7fLh-v7ZeEG'
+                        });
+                    } else {
+                        console.error("⚠️ Error: reCAPTCHA no está disponible.");
+                    }
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
@@ -67,7 +72,7 @@
 
         function saveMarker(index, location) {
             var name = document.getElementById(`name-${index}`).value;
-            var recaptchaResponse = grecaptcha.getResponse();
+            var recaptchaResponse = grecaptcha.getResponse(recaptchaWidgets[index]);
 
             if (!recaptchaResponse) {
                 Swal.fire({ title: 'Error', text: 'Completa el reCAPTCHA.', icon: 'error', confirmButtonText: 'OK' });
@@ -77,26 +82,25 @@
             location.name = name;
 
             fetch('https://mapariva-4fd04a7c2772.herokuapp.com/locations', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...location, recaptcha: recaptchaResponse })
-})
-.then(response => {
-    if (!response.ok) {
-        return response.json().then(err => { throw new Error(err.message || `Error ${response.status}`); });
-    }
-    return response.json();
-})
-.then(data => {
-    console.log('✅ Registro guardado:', data); // 🔍 Verifica en la consola
-    Swal.fire({ title: 'Éxito', text: 'Registro guardado!', icon: 'success', confirmButtonText: 'OK' });
-    grecaptcha.reset();
-})
-.catch(error => {
-    console.error('❌ Error en la solicitud:', error);
-    Swal.fire({ title: 'Error', text: `No se pudo guardar: ${error.message}`, icon: 'error', confirmButtonText: 'OK' });
-});
-
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...location, recaptcha: recaptchaResponse })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.message || `Error ${response.status}`); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('✅ Registro guardado:', data);
+                Swal.fire({ title: 'Éxito', text: 'Registro guardado!', icon: 'success', confirmButtonText: 'OK' });
+                grecaptcha.reset(recaptchaWidgets[index]);
+            })
+            .catch(error => {
+                console.error('❌ Error en la solicitud:', error);
+                Swal.fire({ title: 'Error', text: `No se pudo guardar: ${error.message}`, icon: 'error', confirmButtonText: 'OK' });
+            });
         }
 
         const geojsonUrls = [
