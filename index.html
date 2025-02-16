@@ -62,13 +62,24 @@
             });
         }
 
-        map.on('dblclick', function(e) {
-            var lat = e.latlng.lat;
-            var lng = e.latlng.lng;
-            var location = { lat, lng, name: '' };
-            addMarker(location, locations.length);
-            locations.push(location);
-        });
+        var customIcon = L.icon({
+        iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/tree-svgrepo-com.svg",
+        iconSize: [40, 40], // Tamaño del icono
+        iconAnchor: [16, 32], // Punto de anclaje (centro-abajo)
+        popupAnchor: [0, -32] // Punto de aparición del popup
+    });
+
+    map.on('dblclick', function(e) {
+    var lat = e.latlng.lat;
+    var lng = e.latlng.lng;
+    var location = { lat, lng, name: '' };
+
+    // Crear el marcador con el icono personalizado
+    let marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+
+    addMarker(location, locations.length);
+    locations.push(location);
+});
 
         function saveMarker(index, location) {
             var name = document.getElementById(`name-${index}`).value;
@@ -104,28 +115,47 @@
         }
 
         const geojsonUrls = [
-            "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Areas_Riva.geojson",
-            "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Conexiones_barrio.geojson",
-            "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Puntos_IAV.geojson",
-            "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Puntos_Infra_barrio.geojson"
-        ];
+        { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Areas_Riva.geojson", type: "area" },
+        { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Conexiones_barrio.geojson", type: "line" },
+        { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Puntos_IAV.geojson", type: "point-iav" },
+        { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Puntos_Infra_barrio.geojson", type: "point-infra" }
+    ];
 
-        geojsonUrls.forEach(url => {
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    L.geoJSON(data, {
-                        onEachFeature: function (feature, layer) {
-                            let popupContent = "<b>Información:</b><br>";
-                            for (let key in feature.properties) {
-                                popupContent += `<b>${key}:</b> ${feature.properties[key]}<br>`;
-                            }
-                            layer.bindPopup(popupContent);
+    geojsonUrls.forEach(layer => {
+        fetch(layer.url)
+            .then(response => response.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    style: function(feature) {
+                        if (layer.type === "area") {
+                            return { color: "#800080", fillColor: "#800080", fillOpacity: 0.3 }; // Morado con transparencia
                         }
-                    }).addTo(map);
-                })
-                .catch(error => console.error('Error cargando GeoJSON:', error));
-        });
+                        if (layer.type === "line") {
+                            return { color: "#800080", weight: 2 }; // Morado para líneas
+                        }
+                    },
+                    pointToLayer: function(feature, latlng) {
+                        let color = layer.type === "point-iav" ? "#800080" : "#808080"; // Morado para IAV, Gris para Infra
+                        return L.circleMarker(latlng, {
+                            radius: 6,
+                            fillColor: color,
+                            color: "#000",
+                            weight: 1,
+                            opacity: 1,
+                            fillOpacity: 0.8
+                        });
+                    },
+                    onEachFeature: function(feature, layer) {
+                        let popupContent = "<b>Información:</b><br>";
+                        for (let key in feature.properties) {
+                            popupContent += `<b>${key}:</b> ${feature.properties[key]}<br>`;
+                        }
+                        layer.bindPopup(popupContent);
+                    }
+                }).addTo(map);
+            })
+            .catch(error => console.error('Error cargando GeoJSON:', error));
+    });
     </script>
 </body>
 </html>
