@@ -25,8 +25,10 @@
             border-radius: 5px;
             box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
             z-index: 1000;
+            display: flex;
+            gap: 10px;
         }
-        #tree-button {
+        .menu-button {
             width: 40px;
             height: 40px;
             cursor: pointer;
@@ -37,10 +39,18 @@
 <body>
     <div id="map"></div>
     
-    <!-- 🔴 INICIO CAMBIO: Agregar botón flotante -->
+    <!-- 🔴 INICIO CAMBIO: Agregar botones flotantes -->
     <div id="tree-menu">
         <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/cactus-svgrepo-com.svg" 
-             id="tree-button">
+             id="tree-button" class="menu-button">
+        <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/flood-risk-svgrepo-com.svg" 
+             id="flood-button" class="menu-button">
+        <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/flood-svgrepo-com.svg" 
+             id="flood-car-button" class="menu-button">
+        <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/ship-boat-svgrepo-com%20(1).svg" 
+             id="ship-button" class="menu-button">
+        <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/water-treatment-svgrepo-com.svg" 
+             id="water-button" class="menu-button">
     </div>
     <!-- 🔴 FIN CAMBIO -->
     
@@ -54,6 +64,7 @@
         var locations = [];
         var recaptchaWidgets = {};
         var placingTree = false;
+        var currentIcon = null;
 
         fetch('https://mapariva-4fd04a7c2772.herokuapp.com/locations')
             .then(response => response.json())
@@ -64,21 +75,72 @@
                 });
             });
 
-        var customIcon = L.icon({
-            iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/cactus-svgrepo-com.svg",
-            iconSize: [40, 40],
-            iconAnchor: [20, 40],
-            popupAnchor: [0, -40]
-        });
+        var icons = {
+            tree: L.icon({
+                iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/cactus-svgrepo-com.svg",
+                iconSize: [40, 40],
+                iconAnchor: [20, 40],
+                popupAnchor: [0, -40]
+            }),
+            flood: L.icon({
+                iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/flood-risk-svgrepo-com.svg",
+                iconSize: [40, 40],
+                iconAnchor: [20, 40],
+                popupAnchor: [0, -40]
+            }),
+            floodCar: L.icon({
+                iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/flood-svgrepo-com.svg",
+                iconSize: [40, 40],
+                iconAnchor: [20, 40],
+                popupAnchor: [0, -40]
+            }),
+            ship: L.icon({
+                iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/ship-boat-svgrepo-com%20(1).svg",
+                iconSize: [40, 40],
+                iconAnchor: [20, 40],
+                popupAnchor: [0, -40]
+            }),
+            water: L.icon({
+                iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/water-treatment-svgrepo-com.svg",
+                iconSize: [40, 40],
+                iconAnchor: [20, 40],
+                popupAnchor: [0, -40]
+            })
+        };
 
         function addMarker(location, index, showAlert = true) { 
-            L.marker([location.lat, location.lng], { icon: customIcon }).addTo(map)
+            L.marker([location.lat, location.lng], { icon: icons[location.type] }).addTo(map)
                 .bindPopup(`<b>Nombre:</b> ${location.name || "Sin nombre"}`);
         }
 
         // 🔴 INICIO CAMBIO: Activar modo de colocación con clic
         document.getElementById('tree-button').addEventListener('click', () => {
             placingTree = !placingTree;
+            currentIcon = 'tree';
+            map.getContainer().style.cursor = placingTree ? 'crosshair' : '';
+        });
+
+        document.getElementById('flood-button').addEventListener('click', () => {
+            placingTree = !placingTree;
+            currentIcon = 'flood';
+            map.getContainer().style.cursor = placingTree ? 'crosshair' : '';
+        });
+
+        document.getElementById('flood-car-button').addEventListener('click', () => {
+            placingTree = !placingTree;
+            currentIcon = 'floodCar';
+            map.getContainer().style.cursor = placingTree ? 'crosshair' : '';
+        });
+
+        document.getElementById('ship-button').addEventListener('click', () => {
+            placingTree = !placingTree;
+            currentIcon = 'ship';
+            map.getContainer().style.cursor = placingTree ? 'crosshair' : '';
+        });
+
+        document.getElementById('water-button').addEventListener('click', () => {
+            placingTree = !placingTree;
+            currentIcon = 'water';
             map.getContainer().style.cursor = placingTree ? 'crosshair' : '';
         });
 
@@ -89,7 +151,7 @@
 
             var lat = e.latlng.lat;
             var lng = e.latlng.lng;
-            var location = { lat, lng, name: '' };
+            var location = { lat, lng, name: '', type: currentIcon };
             
             Swal.fire({
                 title: "Agregar Ubicación",
@@ -111,7 +173,7 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     saveMarker(locations.length, location);
-                    L.marker([lat, lng], { icon: customIcon }).addTo(map);
+                    L.marker([lat, lng], { icon: icons[currentIcon] }).addTo(map);
                     locations.push(location);
                 }
             });
@@ -165,37 +227,37 @@
         ];
 
         geojsonUrls.forEach(layer => {
-    fetch(layer.url)
-        .then(response => response.json())
-        .then(data => {
-            L.geoJSON(data, {
-                style: function(feature) {
-                    if (layer.type === "area") {
-                        return { color: "#800080", fillColor: "#800080", fillOpacity: 0.3 };
-                    }
-                    if (layer.type === "line") {
-                        return { color: "#800080", weight: 2 };
-                    }
-                },
-                pointToLayer: function(feature, latlng) {
-                    let color = layer.type === "point-iav" ? "#800080" : "#808080";
-                    return L.circleMarker(latlng, {
-                        radius: 6,
-                        fillColor: color,
-                        color: "#000",
-                        weight: 1,
-                        opacity: 1,
-                        fillOpacity: 0.8
-                    });
-                },
-                onEachFeature: function(feature, layer) {
-                    let popupContent = "<b>Información:</b><br>";
-                    for (let key in feature.properties) {
-                        popupContent += `<b>${key}:</b> ${feature.properties[key]}<br>`;
-                    }
-                    layer.bindPopup(popupContent);
-                }
-            }).addTo(map);
+            fetch(layer.url)
+                .then(response => response.json())
+                .then(data => {
+                    L.geoJSON(data, {
+                        style: function(feature) {
+                            if (layer.type === "area") {
+                                return { color: "#800080", fillColor: "#800080", fillOpacity: 0.3 };
+                            }
+                            if (layer.type === "line") {
+                                return { color: "#800080", weight: 2 };
+                            }
+                        },
+                        pointToLayer: function(feature, latlng) {
+                            let color = layer.type === "point-iav" ? "#800080" : "#808080";
+                            return L.circleMarker(latlng, {
+                                radius: 6,
+                                fillColor: color,
+                                color: "#000",
+                                weight: 1,
+                                opacity: 1,
+                                fillOpacity: 0.8
+                            });
+                        },
+                        onEachFeature: function(feature, layer) {
+                            let popupContent = "<b>Información:</b><br>";
+                            for (let key in feature.properties) {
+                                popupContent += `<b>${key}:</b> ${feature.properties[key]}<br>`;
+                            }
+                            layer.bindPopup(popupContent);
+                        }
+                    }).addTo(map);
                 })
                 .catch(error => console.error('Error cargando GeoJSON:', error));
         });
