@@ -33,24 +33,46 @@
             height: 40px;
             cursor: pointer;
         }
+        .menu-item {
+            text-align: center;
+        }
+        .menu-item span {
+            display: block;
+            margin-bottom: 5px;
+        }
         /* 🔴 FIN CAMBIO */
     </style>
 </head>
 <body>
     <div id="map"></div>
     
-    <!-- 🔴 INICIO CAMBIO: Agregar botones flotantes -->
+    <!-- 🔴 INICIO CAMBIO: Agregar botones flotantes con texto -->
     <div id="tree-menu">
-        <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/cactus-svgrepo-com.svg" 
-             id="tree-button" class="menu-button">
-        <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/flood-risk-svgrepo-com.svg" 
-             id="flood-button" class="menu-button">
-        <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/flood-svgrepo-com.svg" 
-             id="flood-car-button" class="menu-button">
-        <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/ship-boat-svgrepo-com%20(1).svg" 
-             id="ship-button" class="menu-button">
-        <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/water-treatment-svgrepo-com.svg" 
-             id="water-button" class="menu-button">
+        <div class="menu-item">
+            <span>Vegetación</span>
+            <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/cactus-svgrepo-com.svg" 
+                 id="tree-button" class="menu-button">
+        </div>
+        <div class="menu-item">
+            <span>Inundación vial</span>
+            <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/flood-risk-svgrepo-com.svg" 
+                 id="flood-button" class="menu-button">
+        </div>
+        <div class="menu-item">
+            <span>Inundación Casa</span>
+            <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/flood-svgrepo-com.svg" 
+                 id="flood-car-button" class="menu-button">
+        </div>
+        <div class="menu-item">
+            <span>Bote</span>
+            <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/ship-boat-svgrepo-com%20(1).svg" 
+                 id="ship-button" class="menu-button">
+        </div>
+        <div class="menu-item">
+            <span>Captación</span>
+            <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/water-treatment-svgrepo-com.svg" 
+                 id="water-button" class="menu-button">
+        </div>
     </div>
     <!-- 🔴 FIN CAMBIO -->
     
@@ -114,35 +136,27 @@
         }
 
         // 🔴 INICIO CAMBIO: Activar modo de colocación con clic
-        document.getElementById('tree-button').addEventListener('click', () => {
+        function togglePlacingMode(iconType) {
             placingTree = !placingTree;
-            currentIcon = 'tree';
+            currentIcon = iconType;
             map.getContainer().style.cursor = placingTree ? 'crosshair' : '';
-        });
 
-        document.getElementById('flood-button').addEventListener('click', () => {
-            placingTree = !placingTree;
-            currentIcon = 'flood';
-            map.getContainer().style.cursor = placingTree ? 'crosshair' : '';
-        });
+            // Desactivar/activar interactividad de las capas GeoJSON
+            geojsonLayerGroups.forEach(layer => {
+                if (placingTree) {
+                    layer.eachLayer(layer => layer.setStyle({ interactive: false }));
+                } else {
+                    layer.eachLayer(layer => layer.setStyle({ interactive: true }));
+                }
+            });
+        }
 
-        document.getElementById('flood-car-button').addEventListener('click', () => {
-            placingTree = !placingTree;
-            currentIcon = 'floodCar';
-            map.getContainer().style.cursor = placingTree ? 'crosshair' : '';
-        });
-
-        document.getElementById('ship-button').addEventListener('click', () => {
-            placingTree = !placingTree;
-            currentIcon = 'ship';
-            map.getContainer().style.cursor = placingTree ? 'crosshair' : '';
-        });
-
-        document.getElementById('water-button').addEventListener('click', () => {
-            placingTree = !placingTree;
-            currentIcon = 'water';
-            map.getContainer().style.cursor = placingTree ? 'crosshair' : '';
-        });
+        document.getElementById('tree-button').addEventListener('click', () => togglePlacingMode('tree'));
+        document.getElementById('flood-button').addEventListener('click', () => togglePlacingMode('flood'));
+        document.getElementById('flood-car-button').addEventListener('click', () => togglePlacingMode('floodCar'));
+        document.getElementById('ship-button').addEventListener('click', () => togglePlacingMode('ship'));
+        document.getElementById('water-button').addEventListener('click', () => togglePlacingMode('water'));
+        // 🔴 FIN CAMBIO
 
         map.on('click', function(e) {
             if (!placingTree) return;
@@ -173,7 +187,8 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     saveMarker(locations.length, location);
-                    L.marker([lat, lng], { icon: icons[currentIcon] }).addTo(map);
+                    var marker = L.marker([lat, lng], { icon: icons[currentIcon] }).addTo(map);
+                    marker.bringToFront(); // Asegurar que el marcador esté por encima de las capas GeoJSON
                     locations.push(location);
                 }
             });
@@ -209,7 +224,8 @@
 
                 // 🔴 INICIO CAMBIO: Agregar el nuevo marcador a locations
                 locations.push(location);
-                addMarker(location, locations.length - 1, false);
+                var marker = L.marker([location.lat, location.lng], { icon: icons[location.type] }).addTo(map);
+                marker.bringToFront(); // Asegurar que el marcador esté por encima de las capas GeoJSON
                 // 🔴 FIN CAMBIO
             })
             .catch(error => {
@@ -218,7 +234,7 @@
             });
         }
 
-        // 🔴 INICIO CAMBIO: Cargar capas de datos con estilos
+        // 🔴 INICIO CAMBIO: Cargar capas de datos con estilos y control de capas
         const geojsonUrls = [
             { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Areas_Riva.geojson", type: "area" },
             { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Conexiones_barrio.geojson", type: "line" },
@@ -226,17 +242,20 @@
             { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Puntos_Infra_barrio.geojson", type: "point-infra" }
         ];
 
-        geojsonUrls.forEach(layer => {
+        var geojsonLayers = {};
+        var geojsonLayerGroups = [];
+
+        Promise.all(geojsonUrls.map(layer => 
             fetch(layer.url)
                 .then(response => response.json())
                 .then(data => {
-                    L.geoJSON(data, {
+                    var geojsonLayer = L.geoJSON(data, {
                         style: function(feature) {
                             if (layer.type === "area") {
-                                return { color: "#800080", fillColor: "#800080", fillOpacity: 0.3 };
+                                return { color: "#800080", fillColor: "#800080", fillOpacity: 0.3, interactive: false };
                             }
                             if (layer.type === "line") {
-                                return { color: "#800080", weight: 2 };
+                                return { color: "#800080", weight: 2, interactive: true };
                             }
                         },
                         pointToLayer: function(feature, latlng) {
@@ -247,7 +266,8 @@
                                 color: "#000",
                                 weight: 1,
                                 opacity: 1,
-                                fillOpacity: 0.8
+                                fillOpacity: 0.8,
+                                interactive: true
                             });
                         },
                         onEachFeature: function(feature, layer) {
@@ -257,9 +277,19 @@
                             }
                             layer.bindPopup(popupContent);
                         }
-                    }).addTo(map);
+                    });
+                    geojsonLayers[layer.type] = geojsonLayer;
+                    geojsonLayerGroups.push(geojsonLayer);
+                    geojsonLayer.addTo(map); // Añadir la capa al mapa inmediatamente
                 })
-                .catch(error => console.error('Error cargando GeoJSON:', error));
+                .catch(error => console.error('Error cargando GeoJSON:', error))
+        )).then(() => {
+            L.control.layers(null, {
+                "ESCALA BARRIO: AREAS RIVA BARRIO": geojsonLayers["area"],
+                "ESCALA BARRIO: CONEXIONES BARRIO (LINEAS)": geojsonLayers["line"],
+                "ESCALA BARRIO: PUNTOS IAV": geojsonLayers["point-iav"],
+                "ESCALA BARRIO: INFRAESTRUCTURA BARRIO": geojsonLayers["point-infra"]
+            }).addTo(map);
         });
         // 🔴 FIN CAMBIO
     </script>
