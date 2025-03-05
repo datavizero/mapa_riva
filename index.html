@@ -89,12 +89,21 @@
         var currentIcon = null;
 
         fetch('https://mapariva-4fd04a7c2772.herokuapp.com/locations')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 locations = data;
                 data.forEach((location, index) => {
+                    console.log('Location data:', location); // Mensaje de consola para depuración
                     addMarker(location, index, false);
                 });
+            })
+            .catch(error => {
+                console.error('Error fetching locations:', error);
             });
 
         var icons = {
@@ -131,7 +140,25 @@
         };
 
         function addMarker(location, index, showAlert = true) { 
-            L.marker([location.lat, location.lng], { icon: icons[location.type] }).addTo(map)
+            if (!location.lat || !location.lng) {
+                console.error('Invalid location data:', location);
+                return;
+            }
+
+            // Asignar un tipo predeterminado si no existe
+            if (!location.type) {
+                location.type = 'tree'; // Cambia 'tree' por el tipo predeterminado que prefieras
+            }
+
+            console.log('Icon type:', location.type); // Mensaje de consola para depuración
+
+            var icon = icons[location.type];
+            if (!icon) {
+                console.error('Invalid icon type:', location.type);
+                return;
+            }
+
+            L.marker([location.lat, location.lng], { icon: icon }).addTo(map)
                 .bindPopup(`<b>Nombre:</b> ${location.name || "Sin nombre"}`);
         }
 
