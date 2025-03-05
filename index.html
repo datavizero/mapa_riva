@@ -356,7 +356,7 @@
                 "ESCALA CIUDAD: PUNTOS CIUDAD": geojsonLayers["ciudad-point"],
                 "ESCALA CUENCA: PUNTOS CUENCA": geojsonLayers["cuenca-point"],
                 "ESCALA CUENCA: PERIMETROS CUENCA": geojsonLayers["cuenca-perimeter"]
-            }).addTo(map);
+            }, { position: 'bottomright' }).addTo(map);
         });
 
         document.getElementById('locate-button').addEventListener('click', function() {
