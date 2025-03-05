@@ -53,6 +53,13 @@
             z-index: 1000;
             cursor: pointer;
         }
+
+        /* 🔴 INICIO CAMBIO: Estilos personalizados para la leyenda */
+        .custom-legend {
+            bottom: 10px !important;
+            right: 10px !important;
+        }
+        /* 🔴 FIN CAMBIO */
     </style>
 </head>
 <body>
@@ -356,7 +363,7 @@
                 "ESCALA CIUDAD: PUNTOS CIUDAD": geojsonLayers["ciudad-point"],
                 "ESCALA CUENCA: PUNTOS CUENCA": geojsonLayers["cuenca-point"],
                 "ESCALA CUENCA: PERIMETROS CUENCA": geojsonLayers["cuenca-perimeter"]
-            }, { position: 'bottomright' }).addTo(map);
+            }, { position: 'bottomright' }).addTo(map).getContainer().classList.add('custom-legend');
         });
 
         document.getElementById('locate-button').addEventListener('click', function() {
