@@ -41,6 +41,18 @@
             margin-bottom: 5px;
         }
         /* 🔴 FIN CAMBIO */
+
+        #locate-button {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgb(255, 255, 255);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -75,6 +87,8 @@
         </div>
     </div>
     <!-- 🔴 FIN CAMBIO -->
+
+    <div id="locate-button">📍 Mi Ubicación</div>
     
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
@@ -269,56 +283,104 @@
             { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Puntos_Infra_barrio.geojson", type: "point-infra" }
         ];
 
+        const ciudadUrls = [
+            { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/CONEXIONES_CIUDAD.geojson", type: "ciudad-line" },
+            { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/PERIMETROS_CIUDAD.geojson", type: "ciudad-perimeter" },
+            { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/POLIGONOS_CIUDAD.geojson", type: "ciudad-polygon" },
+            { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/PUNTOS_CIUDAD.geojson", type: "ciudad-point" }
+        ];
+
+        const cuencaUrls = [
+            { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/PUNTOS_CUENCA.geojson", type: "cuenca-point" },
+            { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/PERIMETROS_CUENCA.geojson", type: "cuenca-perimeter" }
+        ];
+
         var geojsonLayers = {};
         var geojsonLayerGroups = [];
 
-        Promise.all(geojsonUrls.map(layer => 
-            fetch(layer.url)
-                .then(response => response.json())
-                .then(data => {
-                    var geojsonLayer = L.geoJSON(data, {
-                        style: function(feature) {
-                            if (layer.type === "area") {
-                                return { color: "#800080", fillColor: "#800080", fillOpacity: 0.3, interactive: false };
+        function loadGeojsonLayers(urls, zIndex, color, interactive) {
+            return Promise.all(urls.map(layer => 
+                fetch(layer.url)
+                    .then(response => response.json())
+                    .then(data => {
+                        var geojsonLayer = L.geoJSON(data, {
+                            style: function(feature) {
+                                if (layer.type.includes("area") || layer.type.includes("polygon") || layer.type.includes("perimeter")) {
+                                    return { color: color, fillColor: color, fillOpacity: 0.3, interactive: false };
+                                }
+                                if (layer.type.includes("line")) {
+                                    return { color: color, weight: 2, interactive: interactive };
+                                }
+                            },
+                            pointToLayer: function(feature, latlng) {
+                                return L.circleMarker(latlng, {
+                                    radius: 4,
+                                    fillColor: color,
+                                    color: "#000",
+                                    weight: 1,
+                                    opacity: 1,
+                                    fillOpacity: 0.8,
+                                    interactive: interactive
+                                });
+                            },
+                            onEachFeature: function(feature, layer) {
+                                let popupContent = "<b>Información:</b><br>";
+                                for (let key in feature.properties) {
+                                    popupContent += `<b>${key}:</b> ${feature.properties[key]}<br>`;
+                                }
+                                layer.bindPopup(popupContent);
                             }
-                            if (layer.type === "line") {
-                                return { color: "#800080", weight: 2, interactive: true };
-                            }
-                        },
-                        pointToLayer: function(feature, latlng) {
-                            let color = layer.type === "point-iav" ? "#800080" : "#808080";
-                            return L.circleMarker(latlng, {
-                                radius: 6,
-                                fillColor: color,
-                                color: "#000",
-                                weight: 1,
-                                opacity: 1,
-                                fillOpacity: 0.8,
-                                interactive: true
-                            });
-                        },
-                        onEachFeature: function(feature, layer) {
-                            let popupContent = "<b>Información:</b><br>";
-                            for (let key in feature.properties) {
-                                popupContent += `<b>${key}:</b> ${feature.properties[key]}<br>`;
-                            }
-                            layer.bindPopup(popupContent);
-                        }
-                    });
-                    geojsonLayers[layer.type] = geojsonLayer;
-                    geojsonLayerGroups.push(geojsonLayer);
-                    geojsonLayer.addTo(map); // Añadir la capa al mapa inmediatamente
-                })
-                .catch(error => console.error('Error cargando GeoJSON:', error))
-        )).then(() => {
+                        });
+                        geojsonLayer.setZIndex(zIndex);
+                        geojsonLayers[layer.type] = geojsonLayer;
+                        geojsonLayerGroups.push(geojsonLayer);
+                        geojsonLayer.addTo(map); // Añadir la capa al mapa inmediatamente
+                    })
+                    .catch(error => console.error('Error cargando GeoJSON:', error))
+            ));
+        }
+
+        Promise.all([
+            loadGeojsonLayers(geojsonUrls, 2, "#800080", true),
+            loadGeojsonLayers(ciudadUrls, 1, "#008000", false),
+            loadGeojsonLayers(cuencaUrls, 0, "#e57836", false)
+        ]).then(() => {
             L.control.layers(null, {
                 "ESCALA BARRIO: AREAS RIVA BARRIO": geojsonLayers["area"],
                 "ESCALA BARRIO: CONEXIONES BARRIO (LINEAS)": geojsonLayers["line"],
                 "ESCALA BARRIO: PUNTOS IAV": geojsonLayers["point-iav"],
-                "ESCALA BARRIO: INFRAESTRUCTURA BARRIO": geojsonLayers["point-infra"]
+                "ESCALA BARRIO: INFRAESTRUCTURA BARRIO": geojsonLayers["point-infra"],
+                "ESCALA CIUDAD: CONEXIONES CIUDAD": geojsonLayers["ciudad-line"],
+                "ESCALA CIUDAD: PERIMETROS CIUDAD": geojsonLayers["ciudad-perimeter"],
+                "ESCALA CIUDAD: POLIGONOS CIUDAD": geojsonLayers["ciudad-polygon"],
+                "ESCALA CIUDAD: PUNTOS CIUDAD": geojsonLayers["ciudad-point"],
+                "ESCALA CUENCA: PUNTOS CUENCA": geojsonLayers["cuenca-point"],
+                "ESCALA CUENCA: PERIMETROS CUENCA": geojsonLayers["cuenca-perimeter"]
             }).addTo(map);
         });
-        // 🔴 FIN CAMBIO
+
+        document.getElementById('locate-button').addEventListener('click', function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var lat = position.coords.latitude;
+                    var lng = position.coords.longitude;
+                    var userLocation = L.marker([lat, lng], {
+                        icon: L.icon({
+                            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+                            iconSize: [25, 41],
+                            iconAnchor: [12, 41],
+                            popupAnchor: [1, -34]
+                        })
+                    }).addTo(map).bindPopup('Estás aquí').openPopup();
+                    map.setView([lat, lng], 13);
+                }, function(error) {
+                    console.error('Error al obtener la ubicación:', error);
+                    Swal.fire({ title: 'Error', text: 'No se pudo obtener la ubicación.', icon: 'error', confirmButtonText: 'OK' });
+                });
+            } else {
+                Swal.fire({ title: 'Error', text: 'Geolocalización no soportada por el navegador.', icon: 'error', confirmButtonText: 'OK' });
+            }
+        });
     </script>
 </body>
 </html>
