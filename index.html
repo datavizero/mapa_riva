@@ -225,7 +225,7 @@
                 // 🔴 INICIO CAMBIO: Agregar el nuevo marcador a locations
                 locations.push(location);
                 var marker = L.marker([location.lat, location.lng], { icon: icons[location.type] }).addTo(map);
-                marker.bringToFront(); // Asegurar que el marcador esté por encima de las capas GeoJSON
+                // marker.bringToFront(); // Asegurar que el marcador esté por encima de las capas GeoJSON
                 // 🔴 FIN CAMBIO
             })
             .catch(error => {
