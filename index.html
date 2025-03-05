@@ -9,15 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
-        body {
-            display: flex;
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            overflow: hidden;
-        }
-        #map { flex: 1; }
-        #legend { width: 200px; background: white; padding: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); overflow-y: auto; }
+        #map { height: 100vh; width: 100%; }
         .popup-content { width: 220px; text-align: center; }
         .popup-content input { width: 100%; margin-bottom: 10px; }
         .popup-content .g-recaptcha { transform: scale(0.55); transform-origin: 0 0; }
@@ -52,7 +44,6 @@
     </style>
 </head>
 <body>
-    <div id="legend"></div>
     <div id="map"></div>
     
     <!-- 🔴 INICIO CAMBIO: Agregar botones flotantes con texto -->
@@ -197,9 +188,7 @@
                 if (result.isConfirmed) {
                     saveMarker(locations.length, location);
                     var marker = L.marker([lat, lng], { icon: icons[currentIcon] }).addTo(map);
-                    if (marker.bringToFront) {
-                        marker.bringToFront(); // Asegurar que el marcador esté por encima de las capas GeoJSON
-                    }
+                    marker.bringToFront(); // Asegurar que el marcador esté por encima de las capas GeoJSON
                     locations.push(location);
                 }
             });
@@ -236,9 +225,7 @@
                 // 🔴 INICIO CAMBIO: Agregar el nuevo marcador a locations
                 locations.push(location);
                 var marker = L.marker([location.lat, location.lng], { icon: icons[location.type] }).addTo(map);
-                if (marker.bringToFront) {
-                    marker.bringToFront(); // Asegurar que el marcador esté por encima de las capas GeoJSON
-                }
+                marker.bringToFront(); // Asegurar que el marcador esté por encima de las capas GeoJSON
                 // 🔴 FIN CAMBIO
             })
             .catch(error => {
@@ -297,14 +284,12 @@
                 })
                 .catch(error => console.error('Error cargando GeoJSON:', error))
         )).then(() => {
-            var legendControl = L.control.layers(null, {
+            L.control.layers(null, {
                 "ESCALA BARRIO: AREAS RIVA BARRIO": geojsonLayers["area"],
                 "ESCALA BARRIO: CONEXIONES BARRIO (LINEAS)": geojsonLayers["line"],
                 "ESCALA BARRIO: PUNTOS IAV": geojsonLayers["point-iav"],
                 "ESCALA BARRIO: INFRAESTRUCTURA BARRIO": geojsonLayers["point-infra"]
-            }, null, { collapsed: false });
-            legendControl.addTo(map);
-            document.getElementById('legend').appendChild(legendControl.getContainer());
+            }).addTo(map);
         });
         // 🔴 FIN CAMBIO
     </script>
