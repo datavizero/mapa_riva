@@ -290,7 +290,8 @@
             { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Areas_Riva.geojson", type: "area" },
             { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Conexiones_barrio.geojson", type: "line" },
             { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Puntos_IAV.geojson", type: "point-iav" },
-            { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Puntos_Infra_barrio.geojson", type: "point-infra" }
+            { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/main/Puntos_Infra_barrio.geojson", type: "point-infra" },
+            { url: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/amoverelbote.geojson", type: "ship-point" } // Nueva capa
         ];
 
         const ciudadUrls = [
@@ -323,6 +324,9 @@
                                 }
                             },
                             pointToLayer: function(feature, latlng) {
+                                if (layer.type === "ship-point") {
+                                    return L.marker(latlng, { icon: icons.ship });
+                                }
                                 return L.circleMarker(latlng, {
                                     radius: 4,
                                     fillColor: color,
@@ -360,6 +364,7 @@
                 "ESCALA BARRIO: CONEXIONES BARRIO (LINEAS)": geojsonLayers["line"],
                 "ESCALA BARRIO: PUNTOS IAV": geojsonLayers["point-iav"],
                 "ESCALA BARRIO: INFRAESTRUCTURA BARRIO": geojsonLayers["point-infra"],
+                "ESCALA BARRIO: PUNTOS BOTE": geojsonLayers["ship-point"], // Nueva capa en el control de capas
                 "ESCALA CIUDAD: CONEXIONES CIUDAD": geojsonLayers["ciudad-line"],
                 "ESCALA CIUDAD: PERIMETROS CIUDAD": geojsonLayers["ciudad-perimeter"],
                 "ESCALA CIUDAD: POLIGONOS CIUDAD": geojsonLayers["ciudad-polygon"],
