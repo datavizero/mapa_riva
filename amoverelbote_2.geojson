@@ -1,0 +1,27 @@
+{
+"type": "FeatureCollection",
+"name": "amoverelbote",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Name": "1. Ricacha" }, "geometry": { "type": "Point", "coordinates": [ -110.315066706389501, 24.226140144136341, 0.101466208089796 ] } },
+{ "type": "Feature", "properties": { "Name": "1." }, "geometry": { "type": "Point", "coordinates": [ -110.3145304, 24.2249779, 0.101444931777883 ] } },
+{ "type": "Feature", "properties": { "Name": "2. Draguero H15" }, "geometry": { "type": "Point", "coordinates": [ -110.312662508374601, 24.223665080751591, -0.047141267199876 ] } },
+{ "type": "Feature", "properties": { "Name": "2. Draguro con foto" }, "geometry": { "type": "Point", "coordinates": [ -110.312487911965405, 24.22360647196669, -0.04715623559458 ] } },
+{ "type": "Feature", "properties": { "Name": "3. Piloto1" }, "geometry": { "type": "Point", "coordinates": [ -110.312510591254394, 24.223496966306499, -0.047135351140274 ] } },
+{ "type": "Feature", "properties": { "Name": "4. Piloto 2" }, "geometry": { "type": "Point", "coordinates": [ -110.311992294739596, 24.223050986497029, -0.047131081731407 ] } },
+{ "type": "Feature", "properties": { "Name": "5. Plataforma" }, "geometry": { "type": "Point", "coordinates": [ -110.311979034757897, 24.22258063469306, -0.002318763629016 ] } },
+{ "type": "Feature", "properties": { "Name": "6. Plataforma 2" }, "geometry": { "type": "Point", "coordinates": [ -110.312131532143894, 24.223424463891028, -0.047144346182115 ] } },
+{ "type": "Feature", "properties": { "Name": "7. Entallado 1" }, "geometry": { "type": "Point", "coordinates": [ -110.329252640974104, 24.16326022311641, -0.011785221488033 ] } },
+{ "type": "Feature", "properties": { "Name": "8. Encallado2" }, "geometry": { "type": "Point", "coordinates": [ -110.3275322, 24.1648039, 1.110899457089607 ] } },
+{ "type": "Feature", "properties": { "Name": "9. Entallado3 Damiana" }, "geometry": { "type": "Point", "coordinates": [ -110.326746, 24.1656311, -0.011784502139323 ] } },
+{ "type": "Feature", "properties": { "Name": "11. Abandonado 1" }, "geometry": { "type": "Point", "coordinates": [ -110.3263243165419, 24.16546967838423, 0.101329364906271 ] } },
+{ "type": "Feature", "properties": { "Name": "12. Encallado4 " }, "geometry": { "type": "Point", "coordinates": [ -110.3329145, 24.1586385, 0.101439744262206 ] } },
+{ "type": "Feature", "properties": { "Name": "14. Abandonado5" }, "geometry": { "type": "Point", "coordinates": [ -110.330211, 24.1541793, 0.101531025864763 ] } },
+{ "type": "Feature", "properties": { "Name": "15. Templetion" }, "geometry": { "type": "Point", "coordinates": [ -110.328585503287897, 24.152749786316011, 3.228398451264527 ] } },
+{ "type": "Feature", "properties": { "Name": "13. Parlante Or" }, "geometry": { "type": "Point", "coordinates": [ -110.3485663378314, 24.120016388463409, 1.597206109042384 ] } },
+{ "type": "Feature", "properties": { "Name": "16. Panga" }, "geometry": { "type": "Point", "coordinates": [ -110.334217185100897, 24.155741500274569, -0.011785616882261 ] } },
+{ "type": "Feature", "properties": { "Name": "17. abandonado6" }, "geometry": { "type": "Point", "coordinates": [ -110.333733099897898, 24.155779474437871, 0.101374125796245 ] } },
+{ "type": "Feature", "properties": { "Name": "18. gratefullheir" }, "geometry": { "type": "Point", "coordinates": [ -110.3287046, 24.1565418, 0.181385540029268 ] } },
+{ "type": "Feature", "properties": { "Name": "19. Abandonado7" }, "geometry": { "type": "Point", "coordinates": [ -110.3285222, 24.1561708, 0.101462927520159 ] } }
+]
+}
