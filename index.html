@@ -63,40 +63,66 @@
             z-index: 1000;
         }
         /* 🔴 FIN CAMBIO */
+
     </style>
 </head>
 <body>
     <div id="map"></div>
+
+    <!-- 🔽 Botón para descargar capas GeoJSON visibles -->
+    <button id="download-geojson"
+        style="position:absolute;top:10px;right:10px;z-index:1000;padding:8px 12px;font-family:Arial,sans-serif;">
+    ⬇️ GeoJSON
+    </button>
     
-    <!-- 🔴 INICIO CAMBIO: Agregar botones flotantes con texto -->
+    <!-- 🔄 NUEVO BLOQUE: Botones flotantes actualizados -->
     <div id="tree-menu">
         <div class="menu-item">
-            <span>Vegetación</span>
-            <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/cactus-svgrepo-com.svg" 
-                 id="tree-button" class="menu-button">
+            <span>Residuos post-huracán</span>
+            <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/recycling-bag-trash-svgrepo-com.svg"
+                 id="trash-button" class="menu-button">
+        </div>
+        <div class="menu-item">
+            <span>Manglar contaminado</span>
+            <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/mangrove-svgrepo-com.svg"
+                 id="polluted-mangrove-button" class="menu-button">
+        </div>
+        <div class="menu-item">
+            <span>Manglar deforestado</span>
+            <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/mangrove-svgrepo-com%20(1).svg"
+                 id="deforested-mangrove-button" class="menu-button">
+        </div>
+        <div class="menu-item">
+            <span>Inundación banqueta</span>
+            <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/outfall-svgrepo-com.svg"
+                 id="sidewalk-flood-button" class="menu-button">
         </div>
         <div class="menu-item">
             <span>Inundación vial</span>
-            <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/flood-risk-svgrepo-com.svg" 
+            <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/flood-risk-svgrepo-com.svg"
                  id="flood-button" class="menu-button">
         </div>
         <div class="menu-item">
-            <span>Inundación Casa</span>
-            <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/flood-svgrepo-com.svg" 
-                 id="flood-car-button" class="menu-button">
+            <span>Restaurar funciones ecológicas</span>
+            <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/ecology-planet-svgrepo-com.svg"
+                 id="ecology-button" class="menu-button">
         </div>
         <div class="menu-item">
-            <span>Bote</span>
-            <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/ship-boat-svgrepo-com%20(1).svg" 
-                 id="ship-button" class="menu-button">
+            <span>Gestión del agua</span>
+            <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/water-tool-construction-work-repair-svgrepo-com.svg"
+                 id="water-management-button" class="menu-button">
         </div>
         <div class="menu-item">
-            <span>Captación</span>
-            <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/water-treatment-svgrepo-com.svg" 
-                 id="water-button" class="menu-button">
+            <span>Prevención en zonas vulnerables</span>
+            <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/notepad-security-svgrepo-com.svg"
+                 id="risk-prevention-button" class="menu-button">
+        </div>
+        <div class="menu-item">
+            <span>Espacio público urbano</span>
+            <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/park-svgrepo-com.svg"
+                 id="urban-space-button" class="menu-button">
         </div>
     </div>
-    <!-- 🔴 FIN CAMBIO -->
 
     <div id="locate-button">📍 Mi Ubicación</div>
     
@@ -130,38 +156,53 @@
                 console.error('Error fetching locations:', error);
             });
 
-        var icons = {
-            tree: L.icon({
-                iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/cactus-svgrepo-com.svg",
-                iconSize: [40, 40],
-                iconAnchor: [20, 40],
-                popupAnchor: [0, -40]
-            }),
-            flood: L.icon({
-                iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/flood-risk-svgrepo-com.svg",
-                iconSize: [40, 40],
-                iconAnchor: [20, 40],
-                popupAnchor: [0, -40]
-            }),
-            floodCar: L.icon({
-                iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/flood-svgrepo-com.svg",
-                iconSize: [40, 40],
-                iconAnchor: [20, 40],
-                popupAnchor: [0, -40]
-            }),
-            ship: L.icon({
-                iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/ship-boat-svgrepo-com%20(1).svg",
-                iconSize: [40, 40],
-                iconAnchor: [20, 40],
-                popupAnchor: [0, -40]
-            }),
-            water: L.icon({
-                iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/water-treatment-svgrepo-com.svg",
-                iconSize: [40, 40],
-                iconAnchor: [20, 40],
-                popupAnchor: [0, -40]
-            })
-        };
+        // 🔄 NUEVO OBJETO DE ICONOS ACTUALIZADO
+var icons = {
+    trash: L.icon({
+        iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/recycling-bag-trash-svgrepo-com.svg",
+        iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -40]
+    }),
+    pollutedMangrove: L.icon({
+        iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/mangrove-svgrepo-com.svg",
+        iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -40]
+    }),
+    deforestedMangrove: L.icon({
+        iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/mangrove-svgrepo-com%20(1).svg",
+        iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -40]
+    }),
+    sidewalkFlood: L.icon({
+        iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/outfall-svgrepo-com.svg",
+        iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -40]
+    }),
+    flood: L.icon({
+        iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/flood-risk-svgrepo-com.svg",
+        iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -40]
+    }),
+    ecology: L.icon({
+        iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/ecology-planet-svgrepo-com.svg",
+        iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -40]
+    }),
+    waterManagement: L.icon({
+        iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/water-tool-construction-work-repair-svgrepo-com.svg",
+        iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -40]
+    }),
+    riskPrevention: L.icon({
+        iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/notepad-security-svgrepo-com.svg",
+        iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -40]
+    }),
+    urbanSpace: L.icon({
+        iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/park-svgrepo-com.svg",
+        iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -40]
+    }),
+
+    ship: L.icon({
+    iconUrl: "https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/ship-boat-svgrepo-com%20(1).svg",
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -40]
+   })
+
+};
 
         function addMarker(location, index, showAlert = true) { 
             if (!location.lat || !location.lng) {
@@ -202,11 +243,19 @@
             });
         }
 
-        document.getElementById('tree-button').addEventListener('click', () => togglePlacingMode('tree'));
-        document.getElementById('flood-button').addEventListener('click', () => togglePlacingMode('flood'));
-        document.getElementById('flood-car-button').addEventListener('click', () => togglePlacingMode('floodCar'));
-        document.getElementById('ship-button').addEventListener('click', () => togglePlacingMode('ship'));
-        document.getElementById('water-button').addEventListener('click', () => togglePlacingMode('water'));
+        // 🔄 NUEVOS EVENTOS DE BOTONES
+
+document.getElementById('trash-button').addEventListener('click', () => togglePlacingMode('trash'));
+document.getElementById('polluted-mangrove-button').addEventListener('click', () => togglePlacingMode('pollutedMangrove'));
+document.getElementById('deforested-mangrove-button').addEventListener('click', () => togglePlacingMode('deforestedMangrove'));
+document.getElementById('sidewalk-flood-button').addEventListener('click', () => togglePlacingMode('sidewalkFlood'));
+document.getElementById('flood-button').addEventListener('click', () => togglePlacingMode('flood'));
+document.getElementById('ecology-button').addEventListener('click', () => togglePlacingMode('ecology'));
+document.getElementById('water-management-button').addEventListener('click', () => togglePlacingMode('waterManagement'));
+document.getElementById('risk-prevention-button').addEventListener('click', () => togglePlacingMode('riskPrevention'));
+document.getElementById('urban-space-button').addEventListener('click', () => togglePlacingMode('urbanSpace'));
+
+
         // 🔴 FIN CAMBIO
 
         map.on('click', function(e) {
@@ -396,6 +445,25 @@
                 Swal.fire({ title: 'Error', text: 'Geolocalización no soportada por el navegador.', icon: 'error', confirmButtonText: 'OK' });
             }
         });
+
+        function downloadGeoJSON(layer, filename) {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(layer.toGeoJSON()));
+    const dlAnchor = document.createElement('a');
+    dlAnchor.setAttribute("href", dataStr);
+    dlAnchor.setAttribute("download", filename);
+    dlAnchor.click();
+    }
+
+document.getElementById("download-geojson").addEventListener("click", function() {
+    const layerKeys = Object.keys(geojsonLayers);
+    layerKeys.forEach(key => {
+        const layer = geojsonLayers[key];
+        if (map.hasLayer(layer)) {
+            downloadGeoJSON(layer, key + ".geojson");
+        }
+    });
+});
+
     </script>
 </body>
 </html>
