@@ -14,23 +14,35 @@
         .popup-content input { width: 100%; margin-bottom: 10px; }
         .popup-content .g-recaptcha { transform: scale(0.55); transform-origin: 0 0; }
         
+        
         /* 🔴 INICIO CAMBIO: Estilos del botón flotante */
+        
+
         #tree-menu {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
-            z-index: 1000;
-            display: flex;
-            gap: 10px;
-        }
+    position: absolute;
+    width: 780px;
+    height: 110px;
+    top: 50px;
+    left: 120px;
+    background: white;
+    padding: 10px;
+    border-radius: 3px;
+    box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+    z-index: 1000;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+    max-height: 90vh;
+    box-sizing: border-box;
+    width: 65vw;  /* Ajuste para que ocupe el 95% del ancho de la ventana */
+    max-width: 580px;
+    overflow-y: auto;
+}
+
         .menu-button {
-            width: 40px;
-            height: 40px;
+            width: 22px;
+            height: 22px;
             cursor: pointer;
         }
         .menu-item {
@@ -39,7 +51,13 @@
         .menu-item span {
             display: block;
             margin-bottom: 5px;
+            font-size: 10px;
         }
+
+        #tree-menu.collapsed {
+            display: none;
+     }
+
         /* 🔴 FIN CAMBIO */
 
         #locate-button {
@@ -56,12 +74,29 @@
 
         /* 🔴 INICIO CAMBIO: Estilos personalizados para la leyenda */
         .custom-legend {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            padding: 10px;
-            z-index: 1000;
-        }
+    background: white;
+    border: 1px solid #ccc;
+    padding: 10px;
+    font-size: 13px;
+    line-height: 1.4;
+    max-width: 220px;
+    max-height: 300px;
+    overflow-y: auto;
+    position: absolute;
+    bottom: 70px;
+    right: 10px;
+    z-index: 1000;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.custom-legend label {
+    display: block;
+    margin-left: 10px;
+}
+.custom-legend strong {
+    display: block;
+    margin-top: 10px;
+}
+
         /* 🔴 FIN CAMBIO */
 
     </style>
@@ -72,11 +107,22 @@
     <!-- 🔽 Botón para descargar capas GeoJSON visibles -->
     <button id="download-geojson"
         style="position:absolute;top:10px;right:10px;z-index:1000;padding:8px 12px;font-family:Arial,sans-serif;">
-    ⬇️ GeoJSON
+    ⬇️ Descarga
     </button>
     
+    <!-- 🔄 NUEVO BLOQUE: Botón de mostrar/ocultar menú -->
+    <button id="toggle-tree-menu"
+        style="position:absolute;top:10px;left:50%;transform:translateX(-50%);
+           z-index:1001;padding:8px 16px;border:none;background:white;
+           border-radius:6px;box-shadow:0 2px 5px rgba(0,0,0,0.15);
+           font-weight:bold;font-family:Arial,sans-serif;cursor:pointer;">
+    Agrega un punto a la RIVA
+    </button>
+
+<!-- 🔄 NUEVO BLOQUE: Botones flotantes actualizados -->
+
     <!-- 🔄 NUEVO BLOQUE: Botones flotantes actualizados -->
-    <div id="tree-menu">
+    <div id="tree-menu" class="collapsed">
         <div class="menu-item">
             <span>Residuos post-huracán</span>
             <img src="https://raw.githubusercontent.com/datavizero/mapa_riva/refs/heads/main/recycling-bag-trash-svgrepo-com.svg"
@@ -403,25 +449,45 @@ document.getElementById('urban-space-button').addEventListener('click', () => to
             ));
         }
 
-        Promise.all([
-            loadGeojsonLayers(geojsonUrls, 2, "#800080", true),
-            loadGeojsonLayers(ciudadUrls, 1, "#008000", false),
-            loadGeojsonLayers(cuencaUrls, 0, "#e57836", false)
-        ]).then(() => {
-            L.control.layers(null, {
-                "ESCALA BARRIO: AREAS RIVA BARRIO": geojsonLayers["area"],
-                "ESCALA BARRIO: CONEXIONES BARRIO (LINEAS)": geojsonLayers["line"],
-                "ESCALA BARRIO: PUNTOS IAV": geojsonLayers["point-iav"],
-                "ESCALA BARRIO: INFRAESTRUCTURA BARRIO": geojsonLayers["point-infra"],
-                "ESCALA BARRIO: PUNTOS BOTE": geojsonLayers["ship-point"], // Nueva capa en el control de capas
-                "ESCALA CIUDAD: CONEXIONES CIUDAD": geojsonLayers["ciudad-line"],
-                "ESCALA CIUDAD: PERIMETROS CIUDAD": geojsonLayers["ciudad-perimeter"],
-                "ESCALA CIUDAD: POLIGONOS CIUDAD": geojsonLayers["ciudad-polygon"],
-                "ESCALA CIUDAD: PUNTOS CIUDAD": geojsonLayers["ciudad-point"],
-                "ESCALA CUENCA: PUNTOS CUENCA": geojsonLayers["cuenca-point"],
-                "ESCALA CUENCA: PERIMETROS CUENCA": geojsonLayers["cuenca-perimeter"]
-            }, { position: 'bottomright' }).addTo(map).getContainer().classList.add('custom-legend');
+        function buildCustomLegend() {
+    const legend = document.getElementById("customLegendContainer");
+    legend.innerHTML = `
+        <strong>Escala Barrio</strong>
+        <label><input type="checkbox" data-layer="area" checked> Áreas RIVA</label>
+        <label><input type="checkbox" data-layer="line" checked> Conexiones</label>
+        <label><input type="checkbox" data-layer="point-iav" checked> Puntos IAV</label>
+        <label><input type="checkbox" data-layer="point-infra" checked> Infraestructura</label>
+        <label><input type="checkbox" data-layer="ship-point" checked> Puntos Bote</label>
+
+        <strong>Escala Ciudad</strong>
+        <label><input type="checkbox" data-layer="ciudad-line" checked> Conexiones</label>
+        <label><input type="checkbox" data-layer="ciudad-perimeter" checked> Perímetros</label>
+        <label><input type="checkbox" data-layer="ciudad-polygon" checked> Polígonos</label>
+        <label><input type="checkbox" data-layer="ciudad-point" checked> Puntos</label>
+
+        <strong>Escala Cuenca</strong>
+        <label><input type="checkbox" data-layer="cuenca-point" checked> Puntos</label>
+        <label><input type="checkbox" data-layer="cuenca-perimeter" checked> Perímetros</label>
+    `;
+
+    legend.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener("change", function () {
+            const layerKey = this.getAttribute("data-layer");
+            const layer = geojsonLayers[layerKey];
+            if (!layer) return;
+            this.checked ? layer.addTo(map) : map.removeLayer(layer);
         });
+    });
+}
+
+        Promise.all([
+    loadGeojsonLayers(geojsonUrls, 2, "#800080", true),
+    loadGeojsonLayers(ciudadUrls, 1, "#008000", false),
+    loadGeojsonLayers(cuencaUrls, 0, "#e57836", false)
+]).then(() => {
+    buildCustomLegend(); // activa la nueva leyenda personalizada HTML
+});
+
 
         document.getElementById('locate-button').addEventListener('click', function() {
             if (navigator.geolocation) {
@@ -454,16 +520,71 @@ document.getElementById('urban-space-button').addEventListener('click', () => to
     dlAnchor.click();
     }
 
-document.getElementById("download-geojson").addEventListener("click", function() {
+const filenameMap = {
+    "area": "Áreas RIVA Barrio",
+    "line": "Conexiones Barrio (Líneas)",
+    "point-iav": "Puntos IAV",
+    "point-infra": "Infraestructura Barrio",
+    "ship-point": "Barcos abandonados",
+    "ciudad-line": "Conexiones Ciudad",
+    "ciudad-perimeter": "Perímetros Ciudad",
+    "ciudad-polygon": "Polígonos Ciudad",
+    "ciudad-point": "Puntos Ciudad",
+    "cuenca-point": "Puntos Cuenca",
+    "cuenca-perimeter": "Perímetros Cuenca"
+};
+
+document.getElementById("download-geojson").addEventListener("click", function () {
     const layerKeys = Object.keys(geojsonLayers);
     layerKeys.forEach(key => {
         const layer = geojsonLayers[key];
         if (map.hasLayer(layer)) {
-            downloadGeoJSON(layer, key + ".geojson");
+            const userFriendlyName = filenameMap[key] || key;
+            downloadGeoJSON(layer, userFriendlyName + ".geojson");
         }
     });
 });
 
+
+document.getElementById("toggle-tree-menu").addEventListener("click", function () {
+    const treeMenu = document.getElementById("tree-menu");
+    if (treeMenu.style.display === "none" || treeMenu.classList.contains("collapsed")) {
+        treeMenu.style.display = "flex";
+        treeMenu.classList.remove("collapsed");
+    } else {
+        treeMenu.style.display = "none";
+        treeMenu.classList.add("collapsed");
+    }
+});
+
+
     </script>
+    <div id="customLegendContainer" class="custom-legend hidden" style="display: none;"></div>
+    <button id="toggle-legend-btn"
+    style="position:absolute;bottom:20px;right:20px;
+           z-index:1001;padding:8px 12px;font-family:Arial,sans-serif;
+           background:white;border-radius:6px;border:none;box-shadow:0 2px 5px rgba(0,0,0,0.15);cursor:pointer;">
+    🧭 Leyenda
+</button>
+
+    <script>
+    document.getElementById("toggle-legend-btn").addEventListener("click", function () {
+        const legend = document.getElementById("customLegendContainer");
+        const isHidden = legend.style.display === "none" || legend.classList.contains("hidden");
+
+        if (isHidden) {
+            legend.style.display = "block";
+            legend.classList.remove("hidden");
+            this.textContent = "Ocultar leyenda";
+        } else {
+            legend.style.display = "none";
+            legend.classList.add("hidden");
+            this.textContent = "Mostrar leyenda";
+        }
+    });
+</script>
+
+    </script>
+
 </body>
 </html>
