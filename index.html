@@ -105,6 +105,13 @@
         style="position:absolute;top:10px;right:10px;z-index:1000;padding:8px 12px;font-family:Arial,sans-serif;">
     ⬇️ Descarga
     </button>
+
+    <button id="download-csv"
+    style="position:absolute;top:50px;right:10px;z-index:1000;
+           padding:8px 12px;font-family:Arial,sans-serif;">
+    📥 Descarga base colaborativa
+    </button>
+
     
     <!-- 🔄 NUEVO BLOQUE: Botón de mostrar/ocultar menú -->
     <button id="toggle-tree-menu"
@@ -408,7 +415,7 @@ document.getElementById('urban-space-button').addEventListener('click', () => to
                         var geojsonLayer = L.geoJSON(data, {
                             style: function(feature) {
                                 if (layer.type.includes("area") || layer.type.includes("polygon") || layer.type.includes("perimeter")) {
-                                    return { color: color, fillColor: color, fillOpacity: 0.3, interactive: false };
+                                    return { color: color, fillColor: color, weight: 1.5, fillOpacity: 0.3, interactive: false };
                                 }
                                 if (layer.type.includes("line")) {
                                     return { color: color, weight: 2, interactive: interactive };
@@ -449,16 +456,14 @@ document.getElementById('urban-space-button').addEventListener('click', () => to
     const legend = document.getElementById("customLegendContainer");
     legend.innerHTML = `
         <strong>Escala Barrio</strong>
+        <label><input type="checkbox" data-layer-group="point-iav-group" checked> Puntos IAV</label>
         <label><input type="checkbox" data-layer="area" checked> Áreas RIVA</label>
         <label><input type="checkbox" data-layer="line" checked> Conexiones</label>
-        <label><input type="checkbox" data-layer="point-iav" checked> Puntos IAV</label>
-        <label><input type="checkbox" data-layer="point-infra" checked> Infraestructura</label>
         <label><input type="checkbox" data-layer="ship-point" checked> Puntos Bote</label>
 
         <strong>Escala Ciudad</strong>
         <label><input type="checkbox" data-layer="ciudad-line" checked> Conexiones</label>
-        <label><input type="checkbox" data-layer="ciudad-perimeter" checked> Perímetros</label>
-        <label><input type="checkbox" data-layer="ciudad-polygon" checked> Polígonos</label>
+        <label><input type="checkbox" data-layer-group="ciudad-polygons-group" checked> Polígonos</label>
         <label><input type="checkbox" data-layer="ciudad-point" checked> Puntos</label>
 
         <strong>Escala Cuenca</strong>
@@ -469,12 +474,36 @@ document.getElementById('urban-space-button').addEventListener('click', () => to
     legend.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
         checkbox.addEventListener("change", function () {
             const layerKey = this.getAttribute("data-layer");
-            const layer = geojsonLayers[layerKey];
-            if (!layer) return;
-            this.checked ? layer.addTo(map) : map.removeLayer(layer);
+            const layerGroupKey = this.getAttribute("data-layer-group");
+
+            if (layerGroupKey === "point-iav-group") {
+                ["point-iav", "point-infra"].forEach(key => {
+                    const layer = geojsonLayers[key];
+                    if (layer) {
+                        this.checked ? layer.addTo(map) : map.removeLayer(layer);
+                    }
+                });
+                return;
+            }
+
+            if (layerGroupKey === "ciudad-polygons-group") {
+                ["ciudad-perimeter", "ciudad-polygon"].forEach(key => {
+                    const layer = geojsonLayers[key];
+                    if (layer) {
+                        this.checked ? layer.addTo(map) : map.removeLayer(layer);
+                    }
+                });
+                return;
+            }
+
+            if (layerKey && geojsonLayers[layerKey]) {
+                this.checked ? geojsonLayers[layerKey].addTo(map) : map.removeLayer(geojsonLayers[layerKey]);
+            }
         });
     });
 }
+
+
 
         Promise.all([
     loadGeojsonLayers(geojsonUrls, 2, "#800080", true),
@@ -541,6 +570,9 @@ document.getElementById("download-geojson").addEventListener("click", function (
     });
 });
 
+document.getElementById("download-csv").addEventListener("click", function () {
+    window.open("https://mapariva-4fd04a7c2772.herokuapp.com/download-csv", "_blank");
+});
 
 document.getElementById("toggle-tree-menu").addEventListener("click", function () {
     const treeMenu = document.getElementById("tree-menu");
